@@ -10,8 +10,11 @@ from langchain.prompts import ChatPromptTemplate
 
 from loaders import *
 
-# API Key da OpenAI (SUBSTITUA PELA SUA CHAVE VÁLIDA)
-OPENAI_API_KEY = "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"  # ← COLOQUE SUA API KEY REAL AQUI
+# Leitura segura da API Key da OpenAI via Secrets ou ambiente
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    st.error("❌ A variável OPENAI_API_KEY não foi encontrada. Defina nos Secrets do Streamlit.")
+    st.stop()
 
 # Diretório para armazenar arquivos uploaded
 UPLOAD_DIR = "uploaded_files"
