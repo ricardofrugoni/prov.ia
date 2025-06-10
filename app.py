@@ -11,7 +11,7 @@ from langchain.prompts import ChatPromptTemplate
 from loaders import *
 
 # API Key da OpenAI (SUBSTITUA PELA SUA CHAVE VÁLIDA)
-OPENAI_API_KEY = "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"  # ← COLOQUE SUA API KEY REAL AQUI
+OPENAI_API_KEY = "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"  # ← COLOQUE SUA API KEY REAL AQUI
 
 # Diretório para armazenar arquivos uploaded
 UPLOAD_DIR = "uploaded_files"
