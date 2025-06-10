@@ -30,6 +30,9 @@ MODELO_FIXO = 'gpt-4o'
 
 MEMORIA = ConversationBufferMemory()
 
+# Exemplo de uso correto da chave API no ChatOpenAI
+chat = ChatOpenAI(model=MODELO_FIXO, api_key=OPENAI_API_KEY)
+
 def salvar_arquivo_uploaded(arquivo, tipo_arquivo):
     """Salva o arquivo uploaded no diretório de uploads"""
     if arquivo is not None:
