@@ -358,39 +358,41 @@ def adicionar_css_customizado():
         width: 100% !important;
     }
     
-    /* CHAT MESSAGES - TAMANHO CONTROLADO E SEM CAIXAS PRETAS */
+    /* CHAT MESSAGES - TAMANHO AUTOMÁTICO E COMPACTO */
     .stChatMessage {
         background: rgba(30, 30, 30, 0.6) !important;
         border: 1px solid rgba(143, 209, 79, 0.3) !important;
         border-radius: 15px !important;
-        margin: 10px 0 !important;
-        padding: 12px 15px !important; /* Padding reduzido */
+        margin: 8px 0 !important;
+        padding: 8px 12px !important; /* Padding bem reduzido */
         color: white !important;
-        max-width: 85% !important; /* Largura máxima reduzida */
-        width: auto !important; /* Largura automática baseada no conteúdo */
-        min-height: auto !important; /* Altura mínima automática */
+        max-width: 75% !important; /* Largura máxima menor */
+        width: fit-content !important; /* Largura baseada no conteúdo */
+        height: auto !important; /* Altura automática */
+        min-height: auto !important; /* Remove altura mínima */
         box-sizing: border-box !important;
         backdrop-filter: blur(10px) !important;
-        display: inline-block !important; /* Para ajustar ao conteúdo */
+        display: block !important;
+        overflow: visible !important;
     }
     
-    /* Mensagem do usuário - estilo diferenciado e compacta */
+    /* Mensagem do usuário - compacta */
     .stChatMessage[data-testid="chat-message-human"] {
         background: rgba(143, 209, 79, 0.1) !important;
         border: 1px solid rgba(143, 209, 79, 0.4) !important;
         border-left: 4px solid #8FD14F !important;
-        max-width: 80% !important;
+        max-width: 70% !important;
         margin-left: auto !important;
-        margin-right: 10px !important;
+        margin-right: 0 !important;
     }
     
-    /* Mensagem da IA - estilo diferenciado e compacta */
+    /* Mensagem da IA - compacta */
     .stChatMessage[data-testid="chat-message-ai"] {
         background: rgba(30, 30, 30, 0.4) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-left: 4px solid #888 !important;
-        max-width: 90% !important;
-        margin-left: 10px !important;
+        max-width: 85% !important;
+        margin-left: 0 !important;
         margin-right: auto !important;
     }
     
@@ -399,39 +401,59 @@ def adicionar_css_customizado():
         background-color: transparent !important;
     }
     
-    /* Conteúdo das mensagens - compacto e sem fundo */
+    /* Avatar das mensagens - reduzido */
+    .stChatMessage .stChatMessageAvatar {
+        background-color: transparent !important;
+        width: 24px !important;
+        height: 24px !important;
+        min-width: 24px !important;
+        min-height: 24px !important;
+        border-radius: 50% !important;
+        flex-shrink: 0 !important;
+    }
+    
+    /* Conteúdo das mensagens - ultra compacto */
     .stChatMessage .stMarkdown,
+    .stChatMessage .stMarkdown p,
     .stChatMessage p,
     .stChatMessage div {
         background-color: transparent !important;
         color: white !important;
         margin: 0 !important;
         padding: 0 !important;
-        line-height: 1.4 !important;
+        line-height: 1.3 !important;
+        font-size: 14px !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
     }
     
-    /* Container de mensagens - layout compacto */
+    /* Container interno das mensagens */
     .stChatMessage > div {
         display: flex !important;
         align-items: flex-start !important;
-        gap: 10px !important;
+        gap: 8px !important;
         width: 100% !important;
+        min-height: auto !important;
+        height: auto !important;
     }
     
-    /* Avatar reduzido */
-    .stChatMessage .stChatMessageAvatar {
-        background-color: transparent !important;
-        width: 30px !important;
-        height: 30px !important;
-        min-width: 30px !important;
-        border-radius: 50% !important;
-    }
-    
-    /* Conteúdo da mensagem - ajuste automático */
+    /* Conteúdo da mensagem - ajuste perfeito */
     .stChatMessage .stChatMessageContent {
         flex: 1 !important;
-        max-width: calc(100% - 40px) !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
         word-wrap: break-word !important;
+        overflow: visible !important;
+    }
+    
+    /* Forçar altura automática em todos os elementos internos */
+    .stChatMessage *,
+    .stChatMessage > * {
+        height: auto !important;
+        min-height: auto !important;
+        max-height: none !important;
     }
     
     /* CHAT INPUT - FIXO NA PARTE INFERIOR */
