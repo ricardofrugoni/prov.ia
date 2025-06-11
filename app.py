@@ -358,21 +358,21 @@ def adicionar_css_customizado():
         width: 100% !important;
     }
     
-    /* CHAT MESSAGES - BORDAS EXATAS DO TEXTO */
+    /* CHAT MESSAGES - CAIXA EXATA DO TEXTO COMO DESENHO VERMELHO */
     .stChatMessage {
         background: rgba(30, 30, 30, 0.6) !important;
         border: 1px solid rgba(143, 209, 79, 0.3) !important;
         border-radius: 8px !important;
-        margin: 8px 0 8px 40px !important; /* Margem para ícone externo */
-        padding: 0 !important;
+        margin: 8px 0 8px 50px !important; /* Espaço para ícone externo */
+        padding: 8px 12px !important; /* Padding apenas interno do texto */
         color: white !important;
-        width: auto !important; /* Largura automática */
-        max-width: calc(100% - 50px) !important; /* Espaço para ícone */
-        height: auto !important;
+        width: fit-content !important; /* Largura exata do conteúdo */
+        max-width: calc(100% - 60px) !important; /* Limite máximo menos espaço do ícone */
+        height: fit-content !important; /* Altura exata do conteúdo */
         min-height: 0 !important;
         box-sizing: border-box !important;
         backdrop-filter: blur(10px) !important;
-        display: inline-block !important; /* Para ajustar ao conteúdo */
+        display: inline-block !important; /* Para ajustar ao texto */
         position: relative !important;
         vertical-align: top !important;
     }
@@ -396,7 +396,7 @@ def adicionar_css_customizado():
         background-color: transparent !important;
     }
     
-    /* Avatar das mensagens - COMPLETAMENTE EXTERNO */
+    /* Avatar das mensagens - TOTALMENTE FORA DA CAIXA */
     .stChatMessage .stChatMessageAvatar {
         background-color: #333 !important;
         width: 28px !important;
@@ -408,77 +408,58 @@ def adicionar_css_customizado():
         align-items: center !important;
         justify-content: center !important;
         position: absolute !important;
-        left: -40px !important; /* Bem fora da caixa */
-        top: 0px !important; /* Alinhado ao topo do texto */
+        left: -45px !important; /* Bem fora, à esquerda da caixa */
+        top: 8px !important; /* Alinhado ao primeiro texto */
         z-index: 10 !important;
         border: 2px solid #555 !important;
     }
     
-    /* Conteúdo das mensagens - PADDING MÍNIMO INTERNO */
+    /* Conteúdo das mensagens - DIRETO SEM CONTAINER EXTRA */
     .stChatMessage .stMarkdown,
     .stChatMessage .stMarkdown p,
     .stChatMessage p {
         background-color: transparent !important;
         color: white !important;
         margin: 0 !important;
-        padding: 8px 12px !important; /* Padding mínimo interno */
+        padding: 0 !important; /* Sem padding - a caixa já tem */
         line-height: 1.4 !important;
         font-size: 16px !important;
         word-wrap: break-word !important;
-        display: inline-block !important; /* Para seguir o texto */
-        width: auto !important;
+        display: inline !important; /* Inline para seguir texto */
     }
     
-    /* Container das mensagens - SEM INTERFERÊNCIA */
+    /* ELIMINAR TODOS OS CONTAINERS INTERMEDIÁRIOS */
     .stChatMessage > div {
-        margin: 0 !important;
-        padding: 0 !important;
-        height: auto !important;
-        min-height: 0 !important;
-        display: inline-block !important;
-        width: auto !important;
+        display: contents !important; /* Remove o container */
     }
     
-    /* Conteúdo da mensagem - TAMANHO EXATO DO TEXTO */
     .stChatMessage .stChatMessageContent {
-        margin: 0 !important;
-        padding: 0 !important;
-        word-wrap: break-word !important;
-        height: auto !important;
-        min-height: 0 !important;
-        display: inline-block !important;
-        width: auto !important;
-        max-width: none !important;
+        display: contents !important; /* Remove o container */
     }
     
-    /* REMOVER TODOS OS ESPAÇOS DESNECESSÁRIOS */
+    /* FORÇAR ESTRUTURA SIMPLES - APENAS TEXTO */
     .stChatMessage div:not(.stChatMessageAvatar) {
+        display: contents !important;
         margin: 0 !important;
         padding: 0 !important;
-        height: auto !important;
-        min-height: 0 !important;
         background: transparent !important;
     }
     
-    /* Elementos internos - SEM PADDING EXTRA */
+    /* GARANTIR QUE NÃO HAJA ELEMENTOS EXTRAS */
+    .stChatMessage *:not(.stChatMessageAvatar):not(p):not(.stMarkdown) {
+        display: contents !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+    }
+    
+    /* Texto direto - sem wrappers */
     .stChatMessage .stMarkdown > *:first-child {
         margin-top: 0 !important;
-        padding-top: 0 !important;
     }
     
     .stChatMessage .stMarkdown > *:last-child {
         margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    
-    /* FORÇAR INLINE PARA SEGUIR TEXTO */
-    .stChatMessage,
-    .stChatMessage .stMarkdown,
-    .stChatMessage .stChatMessageContent {
-        display: inline-block !important;
-        vertical-align: top !important;
-        width: auto !important;
-        max-width: fit-content !important;
     }
     
     /* CHAT INPUT - FIXO NA PARTE INFERIOR */
