@@ -358,22 +358,23 @@ def adicionar_css_customizado():
         width: 100% !important;
     }
     
-    /* CHAT MESSAGES - SEM ESPAÇO MORTO, ÍCONES EXTERNOS */
+    /* CHAT MESSAGES - BORDAS EXATAS DO TEXTO */
     .stChatMessage {
         background: rgba(30, 30, 30, 0.6) !important;
         border: 1px solid rgba(143, 209, 79, 0.3) !important;
         border-radius: 8px !important;
-        margin: 8px 0 !important;
-        padding: 0 !important; /* Remove padding da caixa principal */
+        margin: 8px 0 8px 40px !important; /* Margem para ícone externo */
+        padding: 0 !important;
         color: white !important;
-        width: calc(100% - 40px) !important; /* Espaço para ícone externo */
-        margin-left: 40px !important; /* Espaço para ícone */
+        width: auto !important; /* Largura automática */
+        max-width: calc(100% - 50px) !important; /* Espaço para ícone */
         height: auto !important;
         min-height: 0 !important;
         box-sizing: border-box !important;
         backdrop-filter: blur(10px) !important;
-        display: block !important;
+        display: inline-block !important; /* Para ajustar ao conteúdo */
         position: relative !important;
+        vertical-align: top !important;
     }
     
     /* Mensagem do usuário */
@@ -395,7 +396,7 @@ def adicionar_css_customizado():
         background-color: transparent !important;
     }
     
-    /* Avatar das mensagens - EXTERNO E POSICIONADO ABSOLUTO */
+    /* Avatar das mensagens - COMPLETAMENTE EXTERNO */
     .stChatMessage .stChatMessageAvatar {
         background-color: #333 !important;
         width: 28px !important;
@@ -407,54 +408,59 @@ def adicionar_css_customizado():
         align-items: center !important;
         justify-content: center !important;
         position: absolute !important;
-        left: -36px !important; /* Posição externa à esquerda */
-        top: 8px !important;
+        left: -40px !important; /* Bem fora da caixa */
+        top: 0px !important; /* Alinhado ao topo do texto */
         z-index: 10 !important;
         border: 2px solid #555 !important;
     }
     
-    /* Conteúdo das mensagens - SEM ESPAÇOS EXTRAS */
+    /* Conteúdo das mensagens - PADDING MÍNIMO INTERNO */
     .stChatMessage .stMarkdown,
     .stChatMessage .stMarkdown p,
-    .stChatMessage p,
-    .stChatMessage div {
+    .stChatMessage p {
         background-color: transparent !important;
         color: white !important;
         margin: 0 !important;
-        padding: 12px !important; /* Padding apenas no conteúdo */
+        padding: 8px 12px !important; /* Padding mínimo interno */
         line-height: 1.4 !important;
         font-size: 16px !important;
         word-wrap: break-word !important;
+        display: inline-block !important; /* Para seguir o texto */
+        width: auto !important;
     }
     
-    /* Container das mensagens - SIMPLIFICADO */
+    /* Container das mensagens - SEM INTERFERÊNCIA */
     .stChatMessage > div {
         margin: 0 !important;
         padding: 0 !important;
         height: auto !important;
         min-height: 0 !important;
+        display: inline-block !important;
+        width: auto !important;
     }
     
-    /* Conteúdo da mensagem - AJUSTE PERFEITO */
+    /* Conteúdo da mensagem - TAMANHO EXATO DO TEXTO */
     .stChatMessage .stChatMessageContent {
         margin: 0 !important;
         padding: 0 !important;
         word-wrap: break-word !important;
         height: auto !important;
         min-height: 0 !important;
+        display: inline-block !important;
+        width: auto !important;
+        max-width: none !important;
     }
     
-    /* ELIMINAR TODOS OS ESPAÇOS EXTRAS */
-    .stChatMessage *,
-    .stChatMessage *:before,
-    .stChatMessage *:after {
+    /* REMOVER TODOS OS ESPAÇOS DESNECESSÁRIOS */
+    .stChatMessage div:not(.stChatMessageAvatar) {
         margin: 0 !important;
-        min-height: 0 !important;
+        padding: 0 !important;
         height: auto !important;
-        box-sizing: border-box !important;
+        min-height: 0 !important;
+        background: transparent !important;
     }
     
-    /* Primeiro e último elemento - SEM MARGINS */
+    /* Elementos internos - SEM PADDING EXTRA */
     .stChatMessage .stMarkdown > *:first-child {
         margin-top: 0 !important;
         padding-top: 0 !important;
@@ -465,12 +471,14 @@ def adicionar_css_customizado():
         padding-bottom: 0 !important;
     }
     
-    /* FORÇAR ALTURA ZERO QUANDO NÃO HÁ CONTEÚDO */
-    .stChatMessage:empty {
-        height: 0 !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        border: none !important;
+    /* FORÇAR INLINE PARA SEGUIR TEXTO */
+    .stChatMessage,
+    .stChatMessage .stMarkdown,
+    .stChatMessage .stChatMessageContent {
+        display: inline-block !important;
+        vertical-align: top !important;
+        width: auto !important;
+        max-width: fit-content !important;
     }
     
     /* CHAT INPUT - FIXO NA PARTE INFERIOR */
