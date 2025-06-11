@@ -691,3 +691,227 @@ def pagina_chat():
         # Adicionar à memória
         memoria.chat_memory.add_user_message(input_usuario)
         memoria.chat_memory.add_ai_message(resposta)
+        st.session_state['memoria'] = memoria
+        
+        # Rerun para atualizar
+        st.rerun()
+
+def listar_arquivos_salvos():
+    """Lista arquivos salvos com metadados"""
+    metadata = carregar_metadata()
+    arquivos_info = []
+    
+    for nome_arquivo, info in metadata.items():
+        if os.path.exists(info['caminho']):
+            arquivos_info.append({
+                'nome_arquivo': nome_arquivo,
+                'nome_original': info['nome_original'],
+                'tipo': info['tipo'],
+                'data_upload': info['data_upload'],
+                'tamanho': info['tamanho']
+            })
+    
+    return arquivos_info
+
+def carregar_documento_salvo(nome_arquivo):
+    """Carrega um documento salvo e reinicializa o ProV.ia com ele"""
+    try:
+        metadata = carregar_metadata()
+        if nome_arquivo in metadata:
+            arquivo_info = metadata[nome_arquivo]
+            caminho = arquivo_info['caminho']
+            tipo = arquivo_info['tipo']
+            
+            if os.path.exists(caminho):
+                # Carregar conteúdo do arquivo
+                if tipo == 'Pdf':
+                    documento = carrega_pdf(caminho)
+                elif tipo == 'Csv':
+                    documento = carrega_csv(caminho)
+                elif tipo == 'Txt':
+                    documento = carrega_txt(caminho)
+                else:
+                    return False
+                
+                # Reinicializar ProV.ia com o documento
+                system_message = f'''Você é um assistente amigável chamado ProV.ia.
+                Você é especialista em assuntos internos, dúvidas e questionamentos sobre a Provion.
+                
+                Você possui acesso às seguintes informações vindas de um documento {tipo}: 
+
+                ####
+                {documento}
+                ####
+
+                Utilize as informações fornecidas para basear as suas respostas quando relevante.
+                Seja prestativo, profissional e cordial em suas respostas.
+
+                Sempre que houver $ na sua saída, substitua por S.'''
+
+                template = ChatPromptTemplate.from_messages([
+                    ('system', system_message),
+                    ('placeholder', '{chat_history}'),
+                    ('user', '{input}')
+                ])
+                
+                chat = ChatOpenAI(model=MODELO_FIXO, api_key=OPENAI_API_KEY)
+                chain = template | chat
+
+                st.session_state['chain'] = chain
+                st.session_state['provia_ativo'] = True
+                st.session_state['documento_atual'] = {
+                    'tipo': tipo, 
+                    'nome': arquivo_info['nome_original'],
+                    'conteudo': documento
+                }
+                
+                return True
+        return False
+    except Exception as e:
+        st.error(f"Erro ao carregar documento: {str(e)}")
+        return False
+
+def deletar_arquivo(nome_arquivo):
+    """Deleta um arquivo salvo"""
+    try:
+        metadata = carregar_metadata()
+        if nome_arquivo in metadata:
+            arquivo_info = metadata[nome_arquivo]
+            caminho = arquivo_info['caminho']
+            
+            # Deletar arquivo físico
+            if os.path.exists(caminho):
+                os.remove(caminho)
+            
+            # Remover dos metadados
+            del metadata[nome_arquivo]
+            salvar_metadata(metadata)
+            
+            return True
+        return False
+    except Exception as e:
+        st.error(f"Erro ao deletar arquivo: {str(e)}")
+        return False
+
+def sidebar():
+    st.sidebar.title("⚙️ Configurações do ProV.ia")
+    
+    # Mostrar documento atual se houver
+    if 'documento_atual' in st.session_state:
+        doc_info = st.session_state['documento_atual']
+        st.sidebar.success(f"📄 **Documento Ativo:**\n{doc_info.get('nome', 'Documento carregado')}\n*Tipo: {doc_info['tipo']}*")
+        
+        if st.sidebar.button('🔄 Voltar ao Modo Padrão', use_container_width=True):
+            st.session_state['chain'] = inicializar_provia_padrao()
+            if 'documento_atual' in st.session_state:
+                del st.session_state['documento_atual']
+            st.sidebar.success('ProV.ia voltou ao modo padrão!')
+            st.rerun()
+    
+    st.sidebar.markdown("---")
+    
+    # Seção de Upload de Arquivos
+    st.sidebar.subheader("📁 Upload de Documentos")
+    tipo_arquivo = st.sidebar.selectbox('Tipo de documento', TIPOS_ARQUIVOS_VALIDOS)
+    
+    arquivo = None
+    if tipo_arquivo == 'Site':
+        arquivo = st.sidebar.text_input('URL do site')
+    elif tipo_arquivo == 'Youtube':
+        arquivo = st.sidebar.text_input('URL do vídeo YouTube')
+    elif tipo_arquivo == 'Pdf':
+        arquivo = st.sidebar.file_uploader('Upload arquivo PDF', type=['pdf'])
+    elif tipo_arquivo == 'Csv':
+        arquivo = st.sidebar.file_uploader('Upload arquivo CSV', type=['csv'])
+    elif tipo_arquivo == 'Txt':
+        arquivo = st.sidebar.file_uploader('Upload arquivo TXT', type=['txt'])
+    
+    # Botão para processar documento
+    if st.sidebar.button('🚀 Processar Documento', use_container_width=True):
+        if not arquivo:
+            st.sidebar.error('Por favor, selecione um documento!')
+        else:
+            # Usar spinner normal em vez de sidebar.spinner
+            with st.spinner('Processando documento...'):
+                try:
+                    inicializar_provia(tipo_arquivo, arquivo)
+                    st.sidebar.success('Documento processado! ProV.ia atualizado com as novas informações.')
+                    st.rerun()
+                except Exception as e:
+                    st.sidebar.error(f'Erro ao processar documento: {str(e)}')
+    
+    st.sidebar.markdown("---")
+    
+    # Seção de Arquivos Salvos - CORRIGIDA
+    st.sidebar.subheader("💾 Arquivos Armazenados")
+    arquivos_salvos = listar_arquivos_salvos()
+    
+    if arquivos_salvos:
+        st.sidebar.write(f"**Total de arquivos: {len(arquivos_salvos)}**")
+        
+        # Mostrar arquivos salvos com opções
+        for i, arquivo_info in enumerate(arquivos_salvos[-10:]):  # Últimos 10 arquivos
+            with st.sidebar.expander(f"📄 {arquivo_info['nome_original']}", expanded=False):
+                st.write(f"**Tipo:** {arquivo_info['tipo']}")
+                st.write(f"**Data:** {arquivo_info['data_upload'][:16]}")
+                st.write(f"**Tamanho:** {arquivo_info['tamanho']} bytes")
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    if st.button('📖 Carregar', key=f"load_{i}_{arquivo_info['nome_arquivo']}", use_container_width=True):
+                        if carregar_documento_salvo(arquivo_info['nome_arquivo']):
+                            st.success(f"Documento '{arquivo_info['nome_original']}' carregado!")
+                            st.rerun()
+                        else:
+                            st.error("Erro ao carregar documento!")
+                
+                with col2:
+                    if st.button('🗑️ Deletar', key=f"del_{i}_{arquivo_info['nome_arquivo']}", use_container_width=True):
+                        if deletar_arquivo(arquivo_info['nome_arquivo']):
+                            st.success("Arquivo deletado!")
+                            st.rerun()
+                        else:
+                            st.error("Erro ao deletar arquivo!")
+    else:
+        st.sidebar.info("📂 Nenhum arquivo salvo ainda")
+    
+    st.sidebar.markdown("---")
+    
+    # Botão para limpar histórico
+    if st.sidebar.button('🗑️ Limpar Histórico', use_container_width=True):
+        st.session_state['memoria'] = ConversationBufferMemory()
+        st.sidebar.success('Histórico limpo!')
+        st.rerun()
+    
+    # Informações do modelo
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🤖 Modelo Ativo")
+    st.sidebar.info(f"**Modelo:** {MODELO_FIXO}\n**Provider:** OpenAI\n**Status:** ✅ Configurado")
+
+def main():
+    # Configurar página
+    st.set_page_config(
+        page_title="ProV.ia - Assistente Inteligente",
+        page_icon="🧠",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
+    
+    # Limpar estado para evitar duplicações
+    if 'app_clean' not in st.session_state:
+        # Limpar tudo exceto algumas chaves essenciais
+        keys_to_keep = ['app_clean', 'chain', 'memoria', 'documento_atual']
+        for key in list(st.session_state.keys()):
+            if key not in keys_to_keep:
+                del st.session_state[key]
+        st.session_state['app_clean'] = True
+    
+    # Sidebar
+    sidebar()
+    
+    # Página principal
+    pagina_chat()
+
+if __name__ == '__main__':
+    main()
