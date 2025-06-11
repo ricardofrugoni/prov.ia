@@ -204,7 +204,7 @@ def adicionar_css_customizado():
         width: 100% !important;
         overflow-y: auto !important;
         height: 100vh !important;
-        padding-bottom: 100px !important; /* Espaço para chat input */
+        padding-bottom: 150px !important; /* Mais espaço para chat input */
     }
     
     .block-container {
@@ -212,8 +212,14 @@ def adicionar_css_customizado():
         margin: 0 auto !important;
         max-width: 700px !important;
         width: 100% !important;
-        min-height: calc(100vh - 100px) !important;
-        padding-bottom: 120px !important; /* Espaço adicional para input */
+        min-height: calc(100vh - 150px) !important;
+        padding-bottom: 180px !important; /* Espaço bem maior para permitir scroll total */
+        box-sizing: border-box !important;
+    }
+    
+    /* FORÇAR SCROLL ADICIONAL */
+    .main .element-container:last-of-type {
+        margin-bottom: 150px !important; /* Margem extra no último elemento */
     }
     
     /* Ocultar header do Streamlit */
@@ -673,6 +679,9 @@ def pagina_chat():
         for mensagem in memoria.buffer_as_messages:
             with st.chat_message(mensagem.type):
                 st.markdown(mensagem.content)
+    
+    # Espaçamento extra para garantir scroll completo
+    st.markdown("<div style='height: 150px;'></div>", unsafe_allow_html=True)
 
     # Input do usuário
     input_usuario = st.chat_input('Fale com o ProV.ia', key="provia_chat_input_unique")
