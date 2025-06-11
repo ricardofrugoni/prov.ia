@@ -2,6 +2,8 @@ import tempfile
 import os
 import shutil
 from pathlib import Path
+import json
+from datetime import datetime
 
 import streamlit as st
 from langchain.memory import ConversationBufferMemory
@@ -18,6 +20,7 @@ if not OPENAI_API_KEY:
 
 # Diretório para armazenar arquivos uploaded
 UPLOAD_DIR = "uploaded_files"
+METADATA_FILE = "file_metadata.json"
 if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
 
@@ -33,8 +36,23 @@ MEMORIA = ConversationBufferMemory()
 # Exemplo de uso correto da chave API no ChatOpenAI
 chat = ChatOpenAI(model=MODELO_FIXO, api_key=OPENAI_API_KEY)
 
+def carregar_metadata():
+    """Carrega metadados dos arquivos salvos"""
+    if os.path.exists(METADATA_FILE):
+        try:
+            with open(METADATA_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
+
+def salvar_metadata(metadata):
+    """Salva metadados dos arquivos"""
+    with open(METADATA_FILE, 'w', encoding='utf-8') as f:
+        json.dump(metadata, f, ensure_ascii=False, indent=2)
+
 def salvar_arquivo_uploaded(arquivo, tipo_arquivo):
-    """Salva o arquivo uploaded no diretório de uploads"""
+    """Salva o arquivo uploaded no diretório de uploads com metadados"""
     if arquivo is not None:
         # Criar nome único baseado no timestamp
         import time
@@ -44,6 +62,17 @@ def salvar_arquivo_uploaded(arquivo, tipo_arquivo):
         
         with open(caminho_arquivo, "wb") as f:
             f.write(arquivo.getbuffer())
+        
+        # Salvar metadados
+        metadata = carregar_metadata()
+        metadata[nome_arquivo] = {
+            'nome_original': arquivo.name,
+            'tipo': tipo_arquivo,
+            'data_upload': datetime.now().isoformat(),
+            'tamanho': len(arquivo.getbuffer()),
+            'caminho': caminho_arquivo
+        }
+        salvar_metadata(metadata)
         
         return caminho_arquivo
     return None
@@ -66,6 +95,23 @@ def carrega_arquivos(tipo_arquivo, arquivo):
         caminho_salvo = salvar_arquivo_uploaded(arquivo, tipo_arquivo)
         documento = carrega_txt(caminho_salvo)
     return documento
+
+def carregar_arquivo_salvo(nome_arquivo):
+    """Carrega um arquivo previamente salvo"""
+    metadata = carregar_metadata()
+    if nome_arquivo in metadata:
+        arquivo_info = metadata[nome_arquivo]
+        caminho = arquivo_info['caminho']
+        tipo = arquivo_info['tipo']
+        
+        if os.path.exists(caminho):
+            if tipo == 'Pdf':
+                return carrega_pdf(caminho)
+            elif tipo == 'Csv':
+                return carrega_csv(caminho)
+            elif tipo == 'Txt':
+                return carrega_txt(caminho)
+    return None
 
 def inicializar_provia(tipo_arquivo, arquivo):
     """Inicializa o ProV.ia com documento específico"""
@@ -101,6 +147,7 @@ def inicializar_provia(tipo_arquivo, arquivo):
 
     st.session_state['chain'] = chain
     st.session_state['provia_ativo'] = True
+    st.session_state['documento_atual'] = {'tipo': tipo_arquivo, 'conteudo': documento}
 
 def inicializar_provia_padrao():
     """Inicializa o ProV.ia com configuração padrão (sem documento específico)"""
@@ -126,7 +173,7 @@ def inicializar_provia_padrao():
     return chain
 
 def adicionar_css_customizado():
-    """CSS corrigido - Dropdown funcional e mensagens sem caixas pretas"""
+    """CSS corrigido - Dropdown funcional, scroll corrigido e mensagens sem caixas pretas"""
     st.markdown("""
     <style>
     /* FORÇA FUNDO PRETO EM TUDO */
@@ -149,12 +196,24 @@ def adicionar_css_customizado():
         color: white !important;
     }
     
-    /* Remover margens e paddings */
-    .main, .main > div, .block-container {
+    /* CORRIGIR SCROLL - PERMITIR ROLAGEM COMPLETA */
+    .main {
         padding: 0 !important;
         margin: 0 !important;
         max-width: 100% !important;
         width: 100% !important;
+        overflow-y: auto !important;
+        height: 100vh !important;
+        padding-bottom: 100px !important; /* Espaço para chat input */
+    }
+    
+    .block-container {
+        padding: 20px !important;
+        margin: 0 auto !important;
+        max-width: 700px !important;
+        width: 100% !important;
+        min-height: calc(100vh - 100px) !important;
+        padding-bottom: 120px !important; /* Espaço adicional para input */
     }
     
     /* Ocultar header do Streamlit */
@@ -174,6 +233,8 @@ def adicionar_css_customizado():
         width: 280px !important;
         min-width: 280px !important;
         max-width: 280px !important;
+        overflow-y: auto !important;
+        height: 100vh !important;
     }
     
     /* Sidebar elementos internos */
@@ -279,51 +340,6 @@ def adicionar_css_customizado():
         padding: 12px !important;
     }
     
-    /* ÁREA PRINCIPAL - SEMPRE CENTRALIZADA */
-    [data-testid="stMain"] {
-        background-color: #000000 !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        position: relative !important;
-        overflow-x: hidden !important;
-        display: flex !important;
-        justify-content: center !important;
-        align-items: flex-start !important;
-        min-height: 100vh !important;
-    }
-    
-    /* CONTAINER PRINCIPAL - CENTRALIZADO COM OU SEM SIDEBAR */
-    .main > div:first-child {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: flex-start !important;
-        min-height: 100vh !important;
-        padding: 20px !important;
-        background-color: #000000 !important;
-        width: 100% !important;
-        max-width: 700px !important;
-        margin: 0 auto !important;
-        box-sizing: border-box !important;
-        position: relative !important;
-        z-index: 1 !important;
-    }
-    
-    /* FORÇAR CENTRALIZAÇÃO QUANDO SIDEBAR FECHADA */
-    .main[data-testid="stMain"]:not(:has(section[data-testid="stSidebar"][aria-expanded="true"])) > div:first-child {
-        margin-left: auto !important;
-        margin-right: auto !important;
-        transform: translateX(0) !important;
-    }
-    
-    /* ÁREA DO CHAT - SEMPRE CENTRALIZADA */
-    .main .element-container {
-        width: 100% !important;
-        max-width: 600px !important;
-        margin: 0 auto !important;
-        background-color: transparent !important;
-    }
-    
     /* TÍTULO - CENTRALIZADO */
     .main h1 {
         color: #8FD14F !important;
@@ -336,15 +352,15 @@ def adicionar_css_customizado():
         width: 100% !important;
     }
     
-    /* CHAT MESSAGES - SEM CAIXAS PRETAS */
+    /* CHAT MESSAGES - SEM CAIXAS PRETAS E MELHOR SCROLL */
     .stChatMessage {
         background: rgba(30, 30, 30, 0.6) !important;
         border: 1px solid rgba(143, 209, 79, 0.3) !important;
         border-radius: 15px !important;
-        margin: 10px auto !important;
+        margin: 10px 0 !important;
         padding: 15px !important;
         color: white !important;
-        max-width: 580px !important;
+        max-width: 100% !important;
         width: 100% !important;
         box-sizing: border-box !important;
         backdrop-filter: blur(10px) !important;
@@ -377,7 +393,7 @@ def adicionar_css_customizado():
         color: white !important;
     }
     
-    /* CHAT INPUT - CENTRALIZADO DINÂMICO */
+    /* CHAT INPUT - FIXO NA PARTE INFERIOR */
     [data-testid="stChatInput"] {
         background-color: rgba(0, 0, 0, 0.95) !important;
         border-top: 2px solid #333 !important;
@@ -445,6 +461,24 @@ def adicionar_css_customizado():
         max-width: 80px !important;
         height: auto !important;
         border-radius: 10px !important;
+    }
+    
+    /* EXPANDER DA SIDEBAR */
+    section[data-testid="stSidebar"] .streamlit-expanderHeader {
+        background-color: #404040 !important;
+        border: 1px solid #666 !important;
+        border-radius: 8px !important;
+        color: white !important;
+        padding: 10px !important;
+        margin: 5px 0 !important;
+    }
+    
+    section[data-testid="stSidebar"] .streamlit-expanderContent {
+        background-color: #333 !important;
+        border: 1px solid #666 !important;
+        border-radius: 8px !important;
+        padding: 10px !important;
+        margin: 5px 0 !important;
     }
     
     /* SCROLLBAR CUSTOMIZADA */
@@ -631,10 +665,14 @@ def pagina_chat():
     chain = st.session_state['chain']
     memoria = st.session_state.get('memoria', MEMORIA)
     
-    # Exibir histórico de conversas
-    for mensagem in memoria.buffer_as_messages:
-        with st.chat_message(mensagem.type):
-            st.markdown(mensagem.content)
+    # Container para mensagens com scroll adequado
+    chat_container = st.container()
+    
+    with chat_container:
+        # Exibir histórico de conversas
+        for mensagem in memoria.buffer_as_messages:
+            with st.chat_message(mensagem.type):
+                st.markdown(mensagem.content)
 
     # Input do usuário
     input_usuario = st.chat_input('Fale com o ProV.ia', key="provia_chat_input_unique")
@@ -653,99 +691,3 @@ def pagina_chat():
         # Adicionar à memória
         memoria.chat_memory.add_user_message(input_usuario)
         memoria.chat_memory.add_ai_message(resposta)
-        st.session_state['memoria'] = memoria
-        
-        # Rerun para atualizar
-        st.rerun()
-
-def listar_arquivos_salvos():
-    """Lista arquivos salvos no diretório de uploads"""
-    arquivos = []
-    if os.path.exists(UPLOAD_DIR):
-        for arquivo in os.listdir(UPLOAD_DIR):
-            caminho_completo = os.path.join(UPLOAD_DIR, arquivo)
-            if os.path.isfile(caminho_completo):
-                arquivos.append(arquivo)
-    return arquivos
-
-def sidebar():
-    st.sidebar.title("⚙️ Configurações do ProV.ia")
-    
-    # Seção de Upload de Arquivos
-    st.sidebar.subheader("📁 Upload de Documentos")
-    tipo_arquivo = st.sidebar.selectbox('Tipo de documento', TIPOS_ARQUIVOS_VALIDOS)
-    
-    arquivo = None
-    if tipo_arquivo == 'Site':
-        arquivo = st.sidebar.text_input('URL do site')
-    elif tipo_arquivo == 'Youtube':
-        arquivo = st.sidebar.text_input('URL do vídeo YouTube')
-    elif tipo_arquivo == 'Pdf':
-        arquivo = st.sidebar.file_uploader('Upload arquivo PDF', type=['pdf'])
-    elif tipo_arquivo == 'Csv':
-        arquivo = st.sidebar.file_uploader('Upload arquivo CSV', type=['csv'])
-    elif tipo_arquivo == 'Txt':
-        arquivo = st.sidebar.file_uploader('Upload arquivo TXT', type=['txt'])
-    
-    # Botão para processar documento
-    if st.sidebar.button('🚀 Processar Documento', use_container_width=True):
-        if not arquivo:
-            st.sidebar.error('Por favor, selecione um documento!')
-        else:
-            # Usar spinner normal em vez de sidebar.spinner
-            with st.spinner('Processando documento...'):
-                try:
-                    inicializar_provia(tipo_arquivo, arquivo)
-                    st.sidebar.success('Documento processado! ProV.ia atualizado com as novas informações.')
-                except Exception as e:
-                    st.sidebar.error(f'Erro ao processar documento: {str(e)}')
-    
-    st.sidebar.markdown("---")
-    
-    # Seção de Arquivos Salvos
-    st.sidebar.subheader("💾 Arquivos Armazenados")
-    arquivos_salvos = listar_arquivos_salvos()
-    if arquivos_salvos:
-        st.sidebar.write(f"Total de arquivos: {len(arquivos_salvos)}")
-        with st.sidebar.expander("Ver arquivos salvos"):
-            for arquivo in arquivos_salvos[-10:]:  # Mostrar últimos 10
-                st.write(f"📄 {arquivo}")
-    else:
-        st.sidebar.write("Nenhum arquivo salvo ainda")
-    
-    # Botão para limpar histórico
-    if st.sidebar.button('🗑️ Limpar Histórico', use_container_width=True):
-        st.session_state['memoria'] = ConversationBufferMemory()
-        st.sidebar.success('Histórico limpo!')
-    
-    # Informações do modelo
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("🤖 Modelo Ativo")
-    st.sidebar.info(f"**Modelo:** {MODELO_FIXO}\n**Provider:** OpenAI\n**Status:** ✅ Configurado")
-
-def main():
-    # Configurar página
-    st.set_page_config(
-        page_title="ProV.ia - Assistente Inteligente",
-        page_icon="🧠",
-        layout="wide",
-        initial_sidebar_state="expanded"
-    )
-    
-    # Limpar estado para evitar duplicações
-    if 'app_clean' not in st.session_state:
-        # Limpar tudo exceto algumas chaves essenciais
-        keys_to_keep = ['app_clean', 'chain', 'memoria']
-        for key in list(st.session_state.keys()):
-            if key not in keys_to_keep:
-                del st.session_state[key]
-        st.session_state['app_clean'] = True
-    
-    # Sidebar
-    sidebar()
-    
-    # Página principal
-    pagina_chat()
-
-if __name__ == '__main__':
-    main()
