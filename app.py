@@ -358,32 +358,40 @@ def adicionar_css_customizado():
         width: 100% !important;
     }
     
-    /* CHAT MESSAGES - SEM CAIXAS PRETAS E MELHOR SCROLL */
+    /* CHAT MESSAGES - TAMANHO CONTROLADO E SEM CAIXAS PRETAS */
     .stChatMessage {
         background: rgba(30, 30, 30, 0.6) !important;
         border: 1px solid rgba(143, 209, 79, 0.3) !important;
         border-radius: 15px !important;
         margin: 10px 0 !important;
-        padding: 15px !important;
+        padding: 12px 15px !important; /* Padding reduzido */
         color: white !important;
-        max-width: 100% !important;
-        width: 100% !important;
+        max-width: 85% !important; /* Largura máxima reduzida */
+        width: auto !important; /* Largura automática baseada no conteúdo */
+        min-height: auto !important; /* Altura mínima automática */
         box-sizing: border-box !important;
         backdrop-filter: blur(10px) !important;
+        display: inline-block !important; /* Para ajustar ao conteúdo */
     }
     
-    /* Mensagem do usuário - estilo diferenciado */
+    /* Mensagem do usuário - estilo diferenciado e compacta */
     .stChatMessage[data-testid="chat-message-human"] {
         background: rgba(143, 209, 79, 0.1) !important;
         border: 1px solid rgba(143, 209, 79, 0.4) !important;
         border-left: 4px solid #8FD14F !important;
+        max-width: 80% !important;
+        margin-left: auto !important;
+        margin-right: 10px !important;
     }
     
-    /* Mensagem da IA - estilo diferenciado */
+    /* Mensagem da IA - estilo diferenciado e compacta */
     .stChatMessage[data-testid="chat-message-ai"] {
         background: rgba(30, 30, 30, 0.4) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-left: 4px solid #888 !important;
+        max-width: 90% !important;
+        margin-left: 10px !important;
+        margin-right: auto !important;
     }
     
     /* Avatar das mensagens */
@@ -391,12 +399,39 @@ def adicionar_css_customizado():
         background-color: transparent !important;
     }
     
-    /* Conteúdo das mensagens - sem fundo */
+    /* Conteúdo das mensagens - compacto e sem fundo */
     .stChatMessage .stMarkdown,
     .stChatMessage p,
     .stChatMessage div {
         background-color: transparent !important;
         color: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 1.4 !important;
+    }
+    
+    /* Container de mensagens - layout compacto */
+    .stChatMessage > div {
+        display: flex !important;
+        align-items: flex-start !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+    
+    /* Avatar reduzido */
+    .stChatMessage .stChatMessageAvatar {
+        background-color: transparent !important;
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        border-radius: 50% !important;
+    }
+    
+    /* Conteúdo da mensagem - ajuste automático */
+    .stChatMessage .stChatMessageContent {
+        flex: 1 !important;
+        max-width: calc(100% - 40px) !important;
+        word-wrap: break-word !important;
     }
     
     /* CHAT INPUT - FIXO NA PARTE INFERIOR */
@@ -545,7 +580,7 @@ def pagina_chat():
     # Adicionar CSS customizado
     adicionar_css_customizado()
     
-    # IMAGEM DO CÉREBRO - SEM TRANSPARÊNCIA
+    # IMAGEM DO CÉREBRO - SEMPRE VISÍVEL E FIXA
     brain_loaded = False
     try:
         if os.path.exists("cerebro_ia.png"):
@@ -554,29 +589,39 @@ def pagina_chat():
                 img_data = img_file.read()
                 img_base64 = base64.b64encode(img_data).decode()
                 
-                # Inserir imagem do cérebro SEM transparência
+                # Inserir imagem do cérebro FIXA E PERMANENTE
                 st.markdown(f"""
-                <div style="position: fixed; right: 50px; top: 50%; transform: translateY(-50%); 
-                           width: 350px; height: 400px; opacity: 1.0; z-index: -1; 
+                <div id="brain-image" style="position: fixed; right: 30px; top: 50%; transform: translateY(-50%); 
+                           width: 300px; height: 350px; opacity: 0.8; z-index: 0; 
                            pointer-events: none; background-size: contain; 
                            background-repeat: no-repeat; background-position: center;
-                           background-image: url(data:image/png;base64,{img_base64});">
+                           background-image: url(data:image/png;base64,{img_base64});
+                           display: block !important; visibility: visible !important;">
                 </div>
+                <script>
+                // Garantir que a imagem permaneça visível
+                setTimeout(function() {{
+                    var brainImg = document.getElementById('brain-image');
+                    if (brainImg) {{
+                        brainImg.style.display = 'block';
+                        brainImg.style.visibility = 'visible';
+                        brainImg.style.opacity = '0.8';
+                    }}
+                }}, 100);
+                </script>
                 """, unsafe_allow_html=True)
                 brain_loaded = True
-                print("✅ Imagem cerebro_ia.png carregada SEM transparência!")
         else:
             print("❌ Arquivo cerebro_ia.png não encontrado")
     except Exception as e:
         print(f"❌ Erro ao carregar cerebro_ia.png: {e}")
     
-    # Fallback se não carregou a imagem real - TAMBÉM SEM TRANSPARÊNCIA
+    # Fallback SVG - TAMBÉM PERMANENTE
     if not brain_loaded:
-        print("🔄 Usando SVG como fallback SEM transparência")
         st.markdown("""
-        <div style="position: fixed; right: 50px; top: 50%; transform: translateY(-50%); 
-                   width: 350px; height: 400px; opacity: 1.0; z-index: -1; 
-                   pointer-events: none;">
+        <div id="brain-svg" style="position: fixed; right: 30px; top: 50%; transform: translateY(-50%); 
+                   width: 300px; height: 350px; opacity: 0.8; z-index: 0; 
+                   pointer-events: none; display: block !important; visibility: visible !important;">
             <svg width="100%" height="100%" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <radialGradient id="brainGlow" cx="50%" cy="50%" r="50%">
@@ -629,6 +674,17 @@ def pagina_chat():
                 </circle>
             </svg>
         </div>
+        <script>
+        // Garantir que o SVG permaneça visível
+        setTimeout(function() {
+            var brainSvg = document.getElementById('brain-svg');
+            if (brainSvg) {
+                brainSvg.style.display = 'block';
+                brainSvg.style.visibility = 'visible';
+                brainSvg.style.opacity = '0.8';
+            }
+        }, 100);
+        </script>
         """, unsafe_allow_html=True)
     
     # Header com logo e título
